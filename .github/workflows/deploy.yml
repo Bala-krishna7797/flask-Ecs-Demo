@@ -18,21 +18,20 @@ jobs:
     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     aws-region: ap-south-1
+- name: Login to Amazon ECR
+  run: |
+    aws ecr get-login-password --region ap-south-1 \
+    | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com
 
+- name: Build Docker image
+  run: docker build -t flask-ecs-demo .
 
-      - name: Login to Amazon ECR
-        run: |
-          aws ecr get-login-password --region ap-south-1 \
-          | docker login --username AWS --password-stdin <AWS_ACCOUNT_ID>.dkr.ecr.ap-south-1.amazonaws.com
+- name: Tag Docker image
+  run: docker tag flask-ecs-demo:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/flask-ecs-demo:latest
 
-      - name: Build Docker image
-        run: docker build -t flask-ecs-demo .
+- name: Push to ECR
+  run: docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/flask-ecs-demo:latest
 
-      - name: Tag Docker image
-        run: docker tag flask-ecs-demo:latest <AWS_ACCOUNT_ID>.dkr.ecr.ap-south-1.amazonaws.com/flask-ecs-demo:latest
-
-      - name: Push to ECR
-        run: docker push <AWS_ACCOUNT_ID>.dkr.ecr.ap-south-1.amazonaws.com/flask-ecs-demo:latest
 
       - name: Deploy to ECS
         run: |
