@@ -25,13 +25,18 @@ jobs:
           | docker login --username AWS --password-stdin 787169319732.dkr.ecr.ap-northeast-1.amazonaws.com
 
       - name: Build Docker image
-        run: docker build -t flask-ecs-demo .
+        run: docker build -t flask-ecs-demo:${{ github.sha }} .
 
       - name: Tag Docker image
-        run: docker tag flask-ecs-demo:latest 787169319732.dkr.ecr.ap-northeast-1.amazonaws.com/flask-ecs-demo:latest
+        run: docker tag flask-ecs-demo:${{ github.sha }} 787169319732.dkr.ecr.ap-northeast-1.amazonaws.com/flask-ecs-demo:${{ github.sha }}
 
       - name: Push to ECR
-        run: docker push 787169319732.dkr.ecr.ap-northeast-1.amazonaws.com/flask-ecs-demo:latest
+        run: docker push 787169319732.dkr.ecr.ap-northeast-1.amazonaws.com/flask-ecs-demo:${{ github.sha }}
+
+      - name: Update ECS task definition
+        run: |
+          sed -i "s|<IMAGE>|787169319732.dkr.ecr.ap-northeast-1.amazonaws.com/flask-ecs-demo:${{ github.sha }}|g" ecs-task.json
+          aws ecs register-task-definition --cli-input-json file://ecs-task.json
 
       - name: Deploy to ECS
         run: |
